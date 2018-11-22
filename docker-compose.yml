@@ -1,0 +1,19 @@
+version: '3'
+services:
+  database:
+    image: mongo:latest
+    ports:
+      - ${DB_PORT}:27017
+    container_name: footballapi
+    restart: always
+  dashboard:
+    image: mongo-express
+    links:
+      - database:mongo
+    ports:
+      - ${DASHBOARD_PORT}:8081
+    container_name: footballapi-dashboard
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+    restart: always
