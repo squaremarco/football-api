@@ -4,18 +4,20 @@
   "description": "Copy football-data.org api data to local database",
   "main": "index.js",
   "scripts": {
+    "scrape": "node -r dotenv/config bin/scrapeApi.js",
     "docker:compose": "docker-compose up -d",
     "docker:kill": "docker kill footballapi",
     "docker:rm": "npm run docker:kill && docker rm footballapi",
     "docker:up": "npm run docker:compose",
     "docker:create": "npm run docker:up && docker exec footballapi mongo footballapi --eval \"db.createCollection('footballapi');\"",
     "docker:drop": "npm run docker:up && docker exec footballapi mongo footballapi --eval \"db.dropDatabase();\"",
-    "start": "npm run docker:create && node -r dotenv/config bin/scrapeApi.js"
+    "start": "npm run docker:create && npm run scrape"
   },
   "author": "squaremarco",
   "license": "MIT",
   "devDependencies": {
     "axios": "^0.18.0",
+    "axios-retry": "^3.1.1",
     "body-parser": "^1.18.3",
     "dotenv": "^6.1.0",
     "express": "^4.16.4",
