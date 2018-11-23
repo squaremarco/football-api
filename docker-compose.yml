@@ -7,7 +7,7 @@ services:
     container_name: footballapi
     restart: always
   dashboard:
-    image: mongo-express
+    image: mongo-express:latest
     links:
       - database:mongo
     ports:
