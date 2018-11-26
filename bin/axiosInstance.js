@@ -17,9 +17,7 @@ retry(axiosInstance, {
   retryCondition: isNetworkOrTooManyRequestsError,
   retryDelay: (_, err) => {
     logger.warn(
-      `${err.syscall} [${err.code || err.errno}] ${err.hostname} ${err.hostname}:${
-        err.port
-      }, retrying in ~${retryInterval / 1000}s...`
+      `${err.syscall} [${err.code || err.errno}] ${err.hostname} ${err.hostname}:${err.port}, retrying in ~${retryInterval / 1000}s...`
     );
     return retryInterval;
   },
