@@ -1,34 +1,24 @@
-const { DB_HOST, DB_PORT, DB_NAME } = process.env;
+const { DB_HOST, DB_PORT } = process.env;
 
-const mongoose = require('mongoose');
-
+const mongooseConnection = require('./mongooseConnection');
 const getCompetitionsHandler = require('./getCompetitions');
 const getMatchesHandler = require('./getMatches');
 const logger = require('../utils/logger');
 const mongooseExit = require('../utils/mongooseExit');
-const queryErrorHandler = require('../utils/queryErrorHandler');
+const apiQueryErrorHandler = require('../utils/apiQueryErrorHandler');
 
 const CompetitionModel = require('../model/competition').competitionModel;
 const MatchModel = require('../model/match').matchModel;
 
-mongoose.connect(
-  `mongodb://${DB_HOST}:${DB_PORT}`,
-  { useNewUrlParser: true, dbName: DB_NAME }
-);
-
-mongoose.connection.on('error', err => {
-  logger.error(`[${err.name}]: ${err.message}`);
-});
-
 process
-  .on('SIGTERM', () => mongooseExit('info', 'SIGTERM received. Gracefully closing connection with the database.', 0))
-  .on('SIGINT', () => mongooseExit('info', 'SIGINT received. Gracefully closing connection with the database.', 0));
+  .on('SIGTERM', () => mongooseExit(mongooseConnection, 'info', 'SIGTERM received. Gracefully closing connection with the database.', 0))
+  .on('SIGINT', () => mongooseExit(mongooseConnection, 'info', 'SIGINT received. Gracefully closing connection with the database.', 0));
 
-mongoose.connection.once('connected', async () => {
-  logger.info(`Connected to ${DB_HOST}:${DB_PORT}/${mongoose.connection.db.databaseName}`);
+mongooseConnection.once('connected', async () => {
+  logger.info(`Connected to ${DB_HOST}:${DB_PORT}/${mongooseConnection.db.databaseName}`);
 
   logger.info('Pulling competitions data from API');
-  const competitions = await getCompetitionsHandler().catch(queryErrorHandler);
+  const competitions = await getCompetitionsHandler().catch(apiQueryErrorHandler);
 
   logger.info('Pushing competition data to database');
   await Promise.all(
@@ -46,12 +36,12 @@ mongoose.connection.once('connected', async () => {
             logger.warn(`Unchanged competition data ${competition.name} [id: ${competition.id}], ignoring...`);
           }
         })
-        .catch(err => mongooseExit('error', err, -1))
+        .catch(err => mongooseExit(mongooseConnection, 'error', err, 1))
     )
   );
 
   logger.info('Pulling matches data from API');
-  const matches = await getMatchesHandler(competitions.map(el => el.id)).catch(queryErrorHandler);
+  const matches = await getMatchesHandler(competitions.map(el => el.id)).catch(apiQueryErrorHandler);
   const matchList = matches.reduce((flat, toFlat) => flat.concat(toFlat), []);
 
   logger.info('Pushing matches data to database');
@@ -70,10 +60,10 @@ mongoose.connection.once('connected', async () => {
             logger.warn(`Unchanged match data [id: ${match.id}], ignoring...`);
           }
         })
-        .catch(err => mongooseExit('error', err, -1))
+        .catch(err => mongooseExit(mongooseConnection, 'error', err, 1))
     )
   );
 
-  logger.info(`Closing connection to ${DB_HOST}:${DB_PORT}/${mongoose.connection.db.databaseName}`);
-  mongoose.connection.close();
+  logger.info(`Closing connection to ${DB_HOST}:${DB_PORT}/${mongooseConnection.db.databaseName}`);
+  mongooseConnection.close();
 });
