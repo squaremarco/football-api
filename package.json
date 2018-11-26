@@ -1,7 +1,7 @@
 {
   "name": "@iamsquare/footballapi",
-  "version": "0.0.0",
-  "description": "Copy football-data.org api data to local database",
+  "version": "0.0.1",
+  "description": "Football-data.org's API scraper and wrapper",
   "main": "index.js",
   "scripts": {
     "scrape": "node -r dotenv/config bin/scrapeApi.js",
@@ -10,8 +10,9 @@
     "docker:up": "docker-compose up -d",
     "docker:create": "npm run docker:up && docker exec footballapi mongo footballapi --eval \"db.createCollection('footballapi');\"",
     "docker:drop": "npm run docker:up && docker exec footballapi mongo footballapi --eval \"db.dropDatabase();\"",
-    "start": "npm run docker:up && npm run scrape",
-    "init": "npm run docker:create"
+    "docker:scrape": "npm run docker:up && npm run scrape",
+    "start": "nodemon --exec \"node -r dotenv/config\" index.js",
+    "init": "npm run docker:create && npm run docker:scrape"
   },
   "author": "squaremarco",
   "license": "MIT",
@@ -21,8 +22,10 @@
     "body-parser": "^1.18.3",
     "dotenv": "^6.1.0",
     "express": "^4.16.4",
+    "lodash": "^4.17.11",
     "mongodb": "^3.1.10",
     "mongoose": "^5.3.12",
+    "nodemon": "^1.18.6",
     "supports-color": "^5.5.0",
     "winston": "^3.1.0"
   },

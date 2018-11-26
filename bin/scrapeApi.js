@@ -1,4 +1,4 @@
-const { DB_HOST, DB_PORT, DB_NAME, API_BASE_URL, API_TOKEN } = process.env;
+const { DB_HOST, DB_PORT, DB_NAME } = process.env;
 
 const mongoose = require('mongoose');
 
