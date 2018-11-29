@@ -12,7 +12,7 @@
     "docker:drop": "npm run docker:up && docker exec footballapi mongo footballapi --eval \"db.dropDatabase();\"",
     "docker:scrape": "npm run docker:up && npm run scrape",
     "start": "nodemon --exec \"node -r dotenv/config\" index.js",
-    "init": "npm run docker:create && npm run docker:scrape"
+    "init": "npm run docker:create && npm run scrape"
   },
   "author": "squaremarco",
   "license": "MIT",
