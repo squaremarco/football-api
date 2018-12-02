@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const competitionSchema = new Schema({
+const CompetitionSchema = new Schema({
   id: Number,
   name: String,
   code: String,
@@ -24,9 +24,9 @@ const competitionSchema = new Schema({
   lastUpdated: Date
 });
 
-const competitionModel = mongoose.model('competition', competitionSchema);
+const CompetitionModel = mongoose.model('competition', CompetitionSchema);
 
 module.exports = {
-  competitionSchema,
-  competitionModel
+  CompetitionSchema,
+  CompetitionModel
 };

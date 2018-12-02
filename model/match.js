@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const matchSchema = new Schema({
+const MatchSchema = new Schema({
   id: Number,
   season: {
     id: Number,
@@ -42,19 +42,12 @@ const matchSchema = new Schema({
   awayTeam: {
     id: Number,
     name: String
-  },
-  referees: [
-    {
-      id: Number,
-      name: String,
-      nationality: String
-    }
-  ]
+  }
 });
 
-const matchModel = mongoose.model('match', matchSchema);
+const MatchModel = mongoose.model('match', MatchSchema);
 
 module.exports = {
-  matchSchema,
-  matchModel
+  MatchSchema,
+  MatchModel
 };
