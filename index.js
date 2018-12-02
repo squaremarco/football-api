@@ -7,8 +7,9 @@ const port = 3000;
 const mongoose = require('mongoose');
 const flatten = require('lodash/flatten');
 
-const CompetitionModel = require('./model/competition').competitionModel;
-const MatchModel = require('./model/match').matchModel;
+const { CompetitionModel } = require('./model/competition');
+const { MatchModel } = require('./model/match');
+const { TeamModel } = require('./model/team');
 
 const logger = require('./utils/logger');
 
@@ -26,7 +27,7 @@ app.get('/api/competitions', async (_, res) => {
 });
 
 app.get('/api/competitions/:id', async (req, res) => {
-  return res.send(await CompetitionModel.findOne({ id: req.params.id }).lean());
+  return req.params.id.match(/^\d+$/) ? res.send(await CompetitionModel.findOne({ id: req.params.id }).lean()) : res.send(await CompetitionModel.findOne({ code: req.params.id }).lean());
 });
 
 app.get('/api/competitions/:id/matches', async (req, res) => {
@@ -44,6 +45,16 @@ app.get('/api/matches', async (_, res) => {
 
 app.get('/api/matches/:id', async (req, res) => {
   return res.send(await MatchModel.find({ id: req.params.id }).lean());
+});
+
+app.get('/api/teams', async (_, res) => {
+  return res.send(await TeamModel.find().lean());
+});
+
+app.get('/api/teams/:id', async (req, res) => {
+  return req.params.id.match(/^\d+$/)
+    ? res.send(await TeamModel.find({ id: req.params.id }).lean())
+    : res.send(await TeamModel.find({ tla: req.params.id }).lean());
 });
 
 app.listen(port, () => logger.info(`App listening on port ${port}!`));

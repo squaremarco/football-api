@@ -1,18 +1,26 @@
 const { DB_HOST, DB_PORT } = process.env;
 
+const flatten = require('lodash/flatten');
+
 const mongooseConnection = require('./mongooseConnection');
 const getCompetitionsHandler = require('./getCompetitions');
 const getMatchesHandler = require('./getMatches');
+const getTeamsHandler = require('./getTeams');
 const logger = require('../utils/logger');
 const mongooseExit = require('../utils/mongooseExit');
 const apiQueryErrorHandler = require('../utils/apiQueryErrorHandler');
 
-const CompetitionModel = require('../model/competition').competitionModel;
-const MatchModel = require('../model/match').matchModel;
+const { CompetitionModel } = require('../model/competition');
+const { MatchModel } = require('../model/match');
+const { TeamModel } = require('../model/team');
 
 process
-  .on('SIGTERM', () => mongooseExit(mongooseConnection, 'info', 'SIGTERM received. Gracefully closing connection with the database.', 0))
-  .on('SIGINT', () => mongooseExit(mongooseConnection, 'info', 'SIGINT received. Gracefully closing connection with the database.', 0));
+  .on('SIGTERM', () =>
+    mongooseExit(mongooseConnection, 'info', 'SIGTERM received. Gracefully closing connection with the database.', 0)
+  )
+  .on('SIGINT', () =>
+    mongooseExit(mongooseConnection, 'info', 'SIGINT received. Gracefully closing connection with the database.', 0)
+  );
 
 mongooseConnection.once('connected', async () => {
   logger.info(`Connected to ${DB_HOST}:${DB_PORT}/${mongooseConnection.db.databaseName}`);
@@ -41,12 +49,11 @@ mongooseConnection.once('connected', async () => {
   );
 
   logger.info('Pulling matches data from API');
-  const matches = await getMatchesHandler(competitions.map(el => el.id)).catch(apiQueryErrorHandler);
-  const matchList = matches.reduce((flat, toFlat) => flat.concat(toFlat), []);
+  const matches = flatten(await getMatchesHandler(competitions.map(el => el.id)).catch(apiQueryErrorHandler));
 
   logger.info('Pushing matches data to database');
   await Promise.all(
-    matchList.map(match =>
+    matches.map(match =>
       MatchModel.findOne({ id: match.id })
         .exec()
         .then(doc => {
@@ -58,6 +65,29 @@ mongooseConnection.once('connected', async () => {
             return doc.set(match).save();
           } else {
             logger.warn(`Unchanged match data [id: ${match.id}], ignoring...`);
+          }
+        })
+        .catch(err => mongooseExit(mongooseConnection, 'error', err, 1))
+    )
+  );
+
+  logger.info('Pulling teams data from API');
+  const teams = flatten(await getTeamsHandler(competitions.map(el => el.id)).catch(apiQueryErrorHandler));
+
+  logger.info('Pushing team data to database');
+  await Promise.all(
+    teams.map(team =>
+      TeamModel.findOne({ id: team.id })
+        .exec()
+        .then(doc => {
+          if (!doc) {
+            logger.info(`Adding new team data [id: ${team.id}]`);
+            return new TeamModel(team).save();
+          } else if (doc && new Date(team.lastUpdated) - doc.lastUpdated) {
+            logger.info(`Updating team data [id: ${team.id}]`);
+            return doc.set(team).save();
+          } else {
+            logger.warn(`Unchanged team data [id: ${team.id}], ignoring...`);
           }
         })
         .catch(err => mongooseExit(mongooseConnection, 'error', err, 1))
