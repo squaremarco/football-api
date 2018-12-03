@@ -7,10 +7,10 @@ const StandingSchema = new Schema({
     startDate: Date,
     endDate: Date,
     currentMatchday: Number,
-    winner: String
+    winner: { id: Number, name: String, shortName: String, tla: String, crestUrl: String }
   },
   standings: [
-    {
+    new Schema({
       stage: String,
       type: String,
       table: [
@@ -30,8 +30,9 @@ const StandingSchema = new Schema({
           goalDifference: Number
         }
       ]
-    }
-  ]
+    })
+  ],
+  lastUpdated: Date
 });
 
 const StandingModel = mongoose.model('standing', StandingSchema);
