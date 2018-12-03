@@ -27,12 +27,18 @@ app.get('/api/competitions', async (_, res) => {
 });
 
 app.get('/api/competitions/:id', async (req, res) => {
-  return req.params.id.match(/^\d+$/) ? res.send(await CompetitionModel.findOne({ id: req.params.id }).lean()) : res.send(await CompetitionModel.findOne({ code: req.params.id }).lean());
+  return req.params.id.match(/^\d+$/)
+    ? res.send(await CompetitionModel.findOne({ id: req.params.id }).lean())
+    : res.send(await CompetitionModel.findOne({ code: req.params.id }).lean());
 });
 
 app.get('/api/competitions/:id/matches', async (req, res) => {
   const competition = await CompetitionModel.findOne({ id: req.params.id }).lean();
-  if (req.query.currentSeason) return await MatchModel.find({ 'season.id': competition.currentSeason.id }).lean();
+
+  if (!competition) return res.send(null);
+
+  if (req.query.currentSeason)
+    return await MatchModel.find({ 'season.id': competition.currentSeason.id }).lean();
 
   return res.send(
     flatten(await Promise.all(competition.seasons.map(season => MatchModel.find({ 'season.id': season.id }).lean())))

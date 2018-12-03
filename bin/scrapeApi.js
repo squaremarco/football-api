@@ -3,9 +3,12 @@ const { DB_HOST, DB_PORT } = process.env;
 const flatten = require('lodash/flatten');
 
 const mongooseConnection = require('./mongooseConnection');
+
 const getCompetitionsHandler = require('./getCompetitions');
 const getMatchesHandler = require('./getMatches');
 const getTeamsHandler = require('./getTeams');
+const getStandingsHandler = require('./getStandings');
+
 const logger = require('../utils/logger');
 const mongooseExit = require('../utils/mongooseExit');
 const apiQueryErrorHandler = require('../utils/apiQueryErrorHandler');
@@ -13,6 +16,7 @@ const apiQueryErrorHandler = require('../utils/apiQueryErrorHandler');
 const { CompetitionModel } = require('../model/competition');
 const { MatchModel } = require('../model/match');
 const { TeamModel } = require('../model/team');
+const { StandingModel } = require('../model/standing');
 
 process
   .on('SIGTERM', () =>
@@ -88,6 +92,29 @@ mongooseConnection.once('connected', async () => {
             return doc.set(team).save();
           } else {
             logger.warn(`Unchanged team data [id: ${team.id}], ignoring...`);
+          }
+        })
+        .catch(err => mongooseExit(mongooseConnection, 'error', err, 1))
+    )
+  );
+
+  logger.info('Pulling standings data from API');
+  const standings = flatten(await getStandingsHandler(competitions.map(el => el.id)).catch(apiQueryErrorHandler));
+
+  logger.info('Push standings data to database');
+  await Promise.all(
+    standings.map(standing =>
+      StandingModel.findOne({ 'season.id': standing.season.id })
+        .exec()
+        .then(doc => {
+          if (!doc) {
+            logger.info(`Adding new standing data [id: ${standing.season.id}]`);
+            return new StandingModel(standing).save();
+          } else if (doc && new Date(standing.lastUpdated) - doc.lastUpdated) {
+            logger.info(`Updating standing data [id: ${standing.season.id}]`);
+            return doc.set(standing).save();
+          } else {
+            logger.warn(`Unchanged standing data [id: ${standing.season.id}], ignoring...`);
           }
         })
         .catch(err => mongooseExit(mongooseConnection, 'error', err, 1))

@@ -18,7 +18,8 @@ const CompetitionSchema = new Schema({
       id: Number,
       startDate: Date,
       endDate: Date,
-      currentMatchday: Number
+      currentMatchday: Number,
+      winner: { id: Number, name: String, shortName: String, tla: String, crestUrl: String }
     }
   ],
   lastUpdated: Date
